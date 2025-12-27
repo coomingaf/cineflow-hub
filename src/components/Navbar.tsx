@@ -4,8 +4,8 @@ import { Search, Menu, X, Film, Tv, Star, Clock, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { name: "خانه", icon: Home, href: "#" },
-  { name: "فیلم‌ها", icon: Film, href: "#movies" },
+  { name: "خانه", icon: Home, href: "/" },
+  { name: "فیلم‌ها", icon: Film, href: "/categories" },
   { name: "سریال‌ها", icon: Tv, href: "#series" },
   { name: "برترین‌ها", icon: Star, href: "#top" },
   { name: "به‌زودی", icon: Clock, href: "#soon" },
