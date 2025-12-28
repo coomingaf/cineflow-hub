@@ -1,19 +1,24 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Menu, X, Film, Tv, Star, Clock, Home } from "lucide-react";
+import { Search, Menu, X, Film, Tv, Star, Clock, Home, Heart, Sun, Moon, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
+import { Link, useNavigate } from "react-router-dom";
 
 const navItems = [
   { name: "خانه", icon: Home, href: "/" },
   { name: "فیلم‌ها", icon: Film, href: "/categories" },
   { name: "سریال‌ها", icon: Tv, href: "/series" },
-  { name: "برترین‌ها", icon: Star, href: "#top" },
-  { name: "به‌زودی", icon: Clock, href: "#soon" },
+  { name: "جستجو", icon: Search, href: "/search" },
+  { name: "درخواست فیلم", icon: Star, href: "/request" },
 ];
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   return (
     <motion.nav
@@ -51,38 +56,40 @@ export const Navbar = () => {
             ))}
           </div>
 
-          {/* Search & Actions */}
+          {/* Actions */}
           <div className="flex items-center gap-3">
-            <AnimatePresence>
-              {isSearchOpen && (
-                <motion.div
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: "auto", opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden"
-                >
-                  <input
-                    type="text"
-                    placeholder="جستجو..."
-                    className="w-48 md:w-64 px-4 py-2 rounded-xl bg-secondary border border-border focus:border-primary focus:outline-none transition-colors"
-                    autoFocus
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
             <Button
               variant="cinema-ghost"
               size="icon"
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              onClick={toggleTheme}
             >
-              <Search className="w-5 h-5" />
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
 
-            <Button variant="cinema" size="lg" className="hidden md:flex">
-              عضویت / ورود
-            </Button>
+            {user && (
+              <Button
+                variant="cinema-ghost"
+                size="icon"
+                onClick={() => navigate('/favorites')}
+              >
+                <Heart className="w-5 h-5" />
+              </Button>
+            )}
+
+            {user ? (
+              <Button
+                variant="cinema-ghost"
+                size="icon"
+                onClick={() => signOut()}
+                className="hidden md:flex"
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
+            ) : (
+              <Button variant="cinema" size="lg" className="hidden md:flex" asChild>
+                <Link to="/auth">عضویت / ورود</Link>
+              </Button>
+            )}
 
             {/* Mobile Menu Button */}
             <Button
@@ -121,9 +128,15 @@ export const Navbar = () => {
                     {item.name}
                   </motion.a>
                 ))}
-                <Button variant="cinema" size="lg" className="w-full mt-4">
-                  عضویت / ورود
-                </Button>
+                {user ? (
+                  <Button variant="cinema" size="lg" className="w-full mt-4" onClick={() => signOut()}>
+                    خروج
+                  </Button>
+                ) : (
+                  <Button variant="cinema" size="lg" className="w-full mt-4" asChild>
+                    <Link to="/auth">عضویت / ورود</Link>
+                  </Button>
+                )}
               </div>
             </motion.div>
           )}
