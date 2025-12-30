@@ -77,14 +77,24 @@ export const Navbar = () => {
             )}
 
             {user ? (
-              <Button
-                variant="cinema-ghost"
-                size="icon"
-                onClick={() => signOut()}
-                className="hidden md:flex"
-              >
-                <LogOut className="w-5 h-5" />
-              </Button>
+              <>
+                <Button
+                  variant="cinema-ghost"
+                  size="icon"
+                  onClick={() => navigate('/profile')}
+                  className="hidden md:flex"
+                >
+                  <User className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="cinema-ghost"
+                  size="icon"
+                  onClick={() => signOut()}
+                  className="hidden md:flex"
+                >
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </>
             ) : (
               <Button variant="cinema" size="lg" className="hidden md:flex" asChild>
                 <Link to="/auth">عضویت / ورود</Link>
@@ -129,9 +139,22 @@ export const Navbar = () => {
                   </motion.a>
                 ))}
                 {user ? (
-                  <Button variant="cinema" size="lg" className="w-full mt-4" onClick={() => signOut()}>
-                    خروج
-                  </Button>
+                  <>
+                    <motion.a
+                      href="/profile"
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: navItems.length * 0.1 }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-all"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <User className="w-5 h-5" />
+                      پروفایل
+                    </motion.a>
+                    <Button variant="cinema" size="lg" className="w-full mt-4" onClick={() => signOut()}>
+                      خروج
+                    </Button>
+                  </>
                 ) : (
                   <Button variant="cinema" size="lg" className="w-full mt-4" asChild>
                     <Link to="/auth">عضویت / ورود</Link>

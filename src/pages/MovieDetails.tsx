@@ -2,14 +2,17 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
-  Play, Download, Star, Clock, Calendar, Users, Heart, Share2, 
-  ChevronLeft, MessageCircle, ThumbsUp, Send, ArrowRight
+  Play, Download, Star, Clock, Calendar, Heart, Share2, 
+  ChevronLeft, MessageCircle, ThumbsUp, Send, ArrowRight, User, Trash2, Loader2
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { MovieCard } from "@/components/MovieCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/useAuth";
+import { useReviews } from "@/hooks/useReviews";
+import { useFavorites } from "@/hooks/useFavorites";
 
 import movie1 from "@/assets/movie-1.jpg";
 import movie2 from "@/assets/movie-2.jpg";
@@ -44,11 +47,6 @@ const movieData = {
     { quality: "WEB-DL 1080p", size: "3.8 GB", encoder: "SPARKS" },
     { quality: "4K UHD", size: "15 GB", encoder: "TERMINAL" },
   ],
-  reviews: [
-    { id: 1, user: "علی رضایی", avatar: movie1, rating: 5, date: "2 روز پیش", content: "یکی از بهترین فیلم‌هایی که تا حالا دیدم. بازی کیلین مورفی فوق‌العاده بود.", likes: 45 },
-    { id: 2, user: "مریم احمدی", avatar: movie2, rating: 4, date: "1 هفته پیش", content: "فیلم خیلی طولانی بود ولی ارزش دیدن داشت. کارگردانی نولان همیشه عالیه.", likes: 32 },
-    { id: 3, user: "محمد کریمی", avatar: movie3, rating: 5, date: "2 هفته پیش", content: "شاهکار سینمایی! همه چیز این فیلم از فیلمنامه تا بازیگری و موسیقی عالی بود.", likes: 67 },
-  ],
   similarMovies: [
     { title: "دانکرک", year: "2017", rating: "7.8", genre: "جنگی", image: movie2, quality: "BluRay" },
     { title: "اینترستلار", year: "2014", rating: "8.6", genre: "علمی-تخیلی", image: movie3, quality: "BluRay" },
@@ -58,9 +56,53 @@ const movieData = {
 
 const MovieDetails = () => {
   const { id } = useParams();
-  const [isLiked, setIsLiked] = useState(false);
+  const movieId = id || "1";
+  
+  const { user } = useAuth();
+  const { reviews, loading: reviewsLoading, userReview, addReview, deleteReview } = useReviews(movieId);
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
+  
   const [newComment, setNewComment] = useState("");
+  const [newRating, setNewRating] = useState(5);
   const [showTrailer, setShowTrailer] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const isLiked = isFavorite(movieId);
+
+  const handleToggleFavorite = async () => {
+    if (isLiked) {
+      await removeFavorite(movieId);
+    } else {
+      await addFavorite(movieId, movieData.title, movieData.image);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!newComment.trim()) return;
+    
+    setSubmitting(true);
+    await addReview(newRating, newComment);
+    setNewComment("");
+    setNewRating(5);
+    setSubmitting(false);
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    await deleteReview(reviewId);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'امروز';
+    if (diffDays === 1) return 'دیروز';
+    if (diffDays < 7) return `${diffDays} روز پیش`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} هفته پیش`;
+    return `${Math.floor(diffDays / 30)} ماه پیش`;
+  };
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
@@ -197,7 +239,7 @@ const MovieDetails = () => {
                 <Button 
                   variant="cinema-ghost" 
                   size="icon"
-                  onClick={() => setIsLiked(!isLiked)}
+                  onClick={handleToggleFavorite}
                   className={isLiked ? "text-red-500" : ""}
                 >
                   <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
@@ -257,7 +299,7 @@ const MovieDetails = () => {
                 دانلود
               </TabsTrigger>
               <TabsTrigger value="reviews" className="flex-1 data-[state=active]:bg-cinema-gold data-[state=active]:text-black rounded-lg">
-                نظرات
+                نظرات ({reviews.length})
               </TabsTrigger>
             </TabsList>
 
@@ -344,63 +386,135 @@ const MovieDetails = () => {
                 className="max-w-3xl mx-auto"
               >
                 {/* Add Comment */}
-                <div className="bg-card/30 backdrop-blur-sm border border-border/30 rounded-2xl p-6 mb-8">
-                  <h4 className="text-foreground font-semibold mb-4 flex items-center gap-2">
-                    <MessageCircle className="w-5 h-5 text-cinema-gold" />
-                    نظر خود را بنویسید
-                  </h4>
-                  <div className="flex gap-4">
-                    <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="نظرتان درباره این فیلم چیست؟"
-                      className="flex-1 bg-background/50 border border-border/50 rounded-xl p-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-cinema-gold/50 resize-none h-24"
-                    />
-                    <Button variant="cinema" size="icon" className="self-end">
-                      <Send className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Comments List */}
-                <div className="space-y-4">
-                  {movieData.reviews.map((review, index) => (
-                    <motion.div
-                      key={review.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="bg-card/30 backdrop-blur-sm border border-border/30 rounded-2xl p-6"
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-border">
-                            <img src={review.avatar} alt={review.user} className="w-full h-full object-cover" />
-                          </div>
-                          <div>
-                            <h5 className="text-foreground font-semibold">{review.user}</h5>
-                            <p className="text-muted-foreground text-sm">{review.date}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${i < review.rating ? "text-cinema-gold fill-cinema-gold" : "text-muted-foreground"}`}
-                            />
+                {user ? (
+                  !userReview && (
+                    <div className="bg-card/30 backdrop-blur-sm border border-border/30 rounded-2xl p-6 mb-8">
+                      <h4 className="text-foreground font-semibold mb-4 flex items-center gap-2">
+                        <MessageCircle className="w-5 h-5 text-cinema-gold" />
+                        نظر خود را بنویسید
+                      </h4>
+                      
+                      {/* Rating Selection */}
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="text-muted-foreground text-sm">امتیاز شما:</span>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              onClick={() => setNewRating(star)}
+                              className="transition-transform hover:scale-110"
+                            >
+                              <Star
+                                className={`w-6 h-6 ${star <= newRating ? "text-cinema-gold fill-cinema-gold" : "text-muted-foreground"}`}
+                              />
+                            </button>
                           ))}
                         </div>
                       </div>
-                      <p className="text-muted-foreground leading-7">{review.content}</p>
-                      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border/30">
-                        <button className="flex items-center gap-2 text-muted-foreground hover:text-cinema-gold transition-colors">
-                          <ThumbsUp className="w-4 h-4" />
-                          <span className="text-sm">{review.likes}</span>
-                        </button>
+
+                      <div className="flex gap-4">
+                        <textarea
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
+                          placeholder="نظرتان درباره این فیلم چیست؟"
+                          className="flex-1 bg-background/50 border border-border/50 rounded-xl p-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-cinema-gold/50 resize-none h-24"
+                        />
+                        <Button 
+                          variant="cinema" 
+                          size="icon" 
+                          className="self-end"
+                          onClick={handleSubmitReview}
+                          disabled={submitting || !newComment.trim()}
+                        >
+                          {submitting ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <Send className="w-5 h-5" />
+                          )}
+                        </Button>
                       </div>
-                    </motion.div>
-                  ))}
-                </div>
+                    </div>
+                  )
+                ) : (
+                  <div className="bg-card/30 backdrop-blur-sm border border-border/30 rounded-2xl p-6 mb-8 text-center">
+                    <p className="text-muted-foreground mb-4">برای ثبت نظر باید وارد حساب کاربری شوید</p>
+                    <Button variant="cinema" asChild>
+                      <Link to="/auth">ورود / ثبت نام</Link>
+                    </Button>
+                  </div>
+                )}
+
+                {/* Comments List */}
+                {reviewsLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : reviews.length > 0 ? (
+                  <div className="space-y-4">
+                    {reviews.map((review, index) => (
+                      <motion.div
+                        key={review.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className={`bg-card/30 backdrop-blur-sm border rounded-2xl p-6 ${
+                          review.user_id === user?.id ? 'border-cinema-gold/50' : 'border-border/30'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-border bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                              {review.profile?.avatar_url ? (
+                                <img src={review.profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <User className="w-6 h-6 text-primary-foreground" />
+                              )}
+                            </div>
+                            <div>
+                              <h5 className="text-foreground font-semibold">
+                                {review.profile?.username || 'کاربر'}
+                                {review.user_id === user?.id && (
+                                  <span className="text-cinema-gold text-sm mr-2">(شما)</span>
+                                )}
+                              </h5>
+                              <p className="text-muted-foreground text-sm">{formatDate(review.created_at)}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${i < review.rating ? "text-cinema-gold fill-cinema-gold" : "text-muted-foreground"}`}
+                                />
+                              ))}
+                            </div>
+                            {review.user_id === user?.id && (
+                              <button 
+                                onClick={() => handleDeleteReview(review.id)}
+                                className="p-1 rounded-lg hover:bg-destructive/20 text-destructive transition-colors mr-2"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-muted-foreground leading-7">{review.content}</p>
+                        <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border/30">
+                          <button className="flex items-center gap-2 text-muted-foreground hover:text-cinema-gold transition-colors">
+                            <ThumbsUp className="w-4 h-4" />
+                            <span className="text-sm">{review.likes}</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>هنوز نظری ثبت نشده است. اولین نفری باشید که نظر می‌دهید!</p>
+                  </div>
+                )}
               </motion.div>
             </TabsContent>
           </Tabs>
