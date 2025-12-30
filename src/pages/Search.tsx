@@ -247,12 +247,13 @@ const Search = () => {
                   transition={{ delay: index * 0.05 }}
                 >
                   <MovieCard
-                    id={movie.id}
                     title={movie.title}
                     year={movie.year}
                     rating={movie.rating.toString()}
+                    genre={movie.genre}
                     image={movie.image}
                     quality={movie.quality}
+                    index={index}
                   />
                 </motion.div>
               ))}
