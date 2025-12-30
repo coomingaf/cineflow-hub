@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { Film, Instagram, Twitter, Youtube, Send, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -12,15 +13,32 @@ const socialLinks = [
 const footerLinks = [
   {
     title: "دسترسی سریع",
-    links: ["فیلم‌ها", "سریال‌ها", "انیمیشن", "مستند", "تماشای آنلاین"],
+    links: [
+      { name: "فیلم‌ها", to: "/categories" },
+      { name: "سریال‌ها", to: "/series" },
+      { name: "جستجو", to: "/search" },
+      { name: "درخواست فیلم", to: "/request" },
+      { name: "علاقه‌مندی‌ها", to: "/favorites" },
+    ],
   },
   {
     title: "ژانرها",
-    links: ["اکشن", "عاشقانه", "ترسناک", "کمدی", "علمی-تخیلی"],
+    links: [
+      { name: "اکشن", to: "/categories" },
+      { name: "عاشقانه", to: "/categories" },
+      { name: "ترسناک", to: "/categories" },
+      { name: "کمدی", to: "/categories" },
+      { name: "علمی-تخیلی", to: "/categories" },
+    ],
   },
   {
     title: "راهنما",
-    links: ["درباره ما", "تماس با ما", "قوانین", "حریم خصوصی", "سوالات متداول"],
+    links: [
+      { name: "درباره ما", to: "/about" },
+      { name: "تماس با ما", to: "/contact" },
+      { name: "سوالات متداول", to: "/about" },
+      { name: "ثبت نام / ورود", to: "/auth" },
+    ],
   },
 ];
 
@@ -66,12 +84,12 @@ export const Footer = () => {
             viewport={{ once: true }}
             className="col-span-2 md:col-span-1"
           >
-            <div className="flex items-center gap-3 mb-4">
+            <Link to="/" className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow">
                 <Film className="w-6 h-6 text-primary-foreground" />
               </div>
               <span className="text-2xl font-bold text-gradient">سینما پلاس</span>
-            </div>
+            </Link>
             <p className="text-muted-foreground text-sm mb-6">
               مرجع دانلود فیلم و سریال با کیفیت بالا و لینک مستقیم
             </p>
@@ -104,13 +122,13 @@ export const Footer = () => {
               <h4 className="font-bold text-lg mb-4">{column.title}</h4>
               <ul className="space-y-3">
                 {column.links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
+                  <li key={link.name}>
+                    <Link
+                      to={link.to}
                       className="text-muted-foreground hover:text-primary transition-colors text-sm"
                     >
-                      {link}
-                    </a>
+                      {link.name}
+                    </Link>
                   </li>
                 ))}
               </ul>
